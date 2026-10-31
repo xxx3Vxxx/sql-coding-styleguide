@@ -1,0 +1,14 @@
+# Референсный конфиг линтера (SQLFluff).
+#
+# ВНИМАНИЕ: на этапе трейсер-пули (тикет 01) здесь ровно одно правило —
+# SYN-003 (`<>` вместо `!=`). По мере добавления правил (тикеты 05–10)
+# конфиг расширяется. Не добавляйте сюда правила, не предусмотренные тикетом.
+
+[sqlfluff]
+dialect = postgres
+templater = raw
+rules = convention.not_equal
+
+[sqlfluff:rules:convention.not_equal]
+# SYN-003: сравнение «не равно» — только через `<>` (ANSI), а не `!=`.
+preferred_not_equal_style = ansi
