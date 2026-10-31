@@ -334,8 +334,7 @@ WHERE id > 0;
 **Хорошо:**
 
 ```sql
-select
-    count(*) as total
+select count(*) as total
 from customer
 where id > 0;
 ```
@@ -434,25 +433,25 @@ from customer;
 **Плохо:**
 
 ```sql
-with x as (
+with active_customer as (
 select id
 from customer
-where active
+where is_active
 )
-select x.id
-from x;
+select active_customer.id
+from active_customer;
 ```
 
 **Хорошо:**
 
 ```sql
-with x as (
+with active_customer as (
     select id
     from customer
-    where active
+    where is_active
 )
-select x.id
-from x;
+select active_customer.id
+from active_customer;
 ```
 
 **Обоснование.** Отступ визуально отражает вложенность: тело CTE читается как
@@ -477,7 +476,7 @@ from x;
 ```sql
 select c.id
     from customer as c
-    where c.active
+    where c.is_active
     order by c.id;
 ```
 
@@ -486,7 +485,7 @@ select c.id
 ```sql
 select c.id
 from customer as c
-where c.active
+where c.is_active
 order by c.id;
 ```
 
@@ -563,7 +562,7 @@ where is_active;
 **Хорошо:**
 
 ```sql
--- только активные пользователи попадают в ежедневную рассылку
+-- только активные клиенты попадают в ежедневную рассылку
 select
     id,
     name
@@ -605,7 +604,7 @@ from customer;
 **Обоснование.** Отсутствие финального перевода строки и «висячие» пробелы в
 конце строк дают грязный diff: каждая правка конца файла и каждый авто-трим
 порождают неотносящиеся к делу изменения. Единый канонический вид конца файла
-делает раздницу читаемой. Опора: `docs/research/sql-style-guides.md` (§3.4,
+делает разницу читаемой. Опора: `docs/research/sql-style-guides.md` (§3.4,
 «Убрать trailing whitespace, финальный перевод строки»).
 
 **Проверяется линтером:** да — правило `LT12` (`layout.end_of_file`, финальный
@@ -681,7 +680,9 @@ from cust;
 **Хорошо:**
 
 ```sql
-select customer_id, customer_phone
+select
+    customer_id,
+    customer_phone
 from customer;
 ```
 
@@ -709,14 +710,18 @@ Hofmeister, Siegmund, Holt (2017) — участники в среднем на 
 **Плохо:**
 
 ```sql
-select id, name as value
+select
+    id,
+    name as value
 from customer;
 ```
 
 **Хорошо:**
 
 ```sql
-select id, name as full_name
+select
+    id,
+    name as full_name
 from customer;
 ```
 
@@ -1010,7 +1015,9 @@ grep-ability, шум в diff, единообразие.
 
 ```sql
 create schema sch_reporting;
-create view customer_view as select id from customer;
+create view customer_view as
+select id
+from customer;
 create sequence customer_id;
 ```
 
@@ -1018,7 +1025,10 @@ create sequence customer_id;
 
 ```sql
 create schema reporting;
-create view active_customer as select id from customer where is_active;
+create view active_customer as
+select id
+from customer
+where is_active;
 create sequence customer_id_seq;
 ```
 
@@ -1092,16 +1102,16 @@ from x;
 **Хорошо:**
 
 ```sql
-with active_user as (
+with active_customer as (
     select id
     from customer
     where is_active
 )
-select active_user.id
-from active_user;
+select active_customer.id
+from active_customer;
 ```
 
-**Обоснование.** Имя CTE несёт смысл производного набора: `active_user`
+**Обоснование.** Имя CTE несёт смысл производного набора: `active_customer`
 читается без возврата к определению, а `x` бессмысленно и не находится по
 grep. Консенсус руководств — именовать CTE по содержимому и выделять одну
 логическую операцию на CTE (dbt, GitLab, Mazur;
@@ -1133,8 +1143,11 @@ create function customer_data(cust int) returns text language sql as
 **Хорошо:**
 
 ```sql
-create function get_customer(customer_id int) returns text language sql as
-    'select name from customer where id = customer_id';
+create function get_customer(customer_id int) returns text language sql as $$
+    select name
+    from customer
+    where id = customer_id;
+$$;
 ```
 
 **Обоснование.** Глагольное имя функции сообщает действие, а не сущность,
@@ -1200,20 +1213,24 @@ inner join purchase as p on p.customer_id = c.id;
 **Плохо:**
 
 ```sql
-select x.id
-from (select id from customer where active) as x;
+select active_customer.id
+from (
+    select id
+    from customer
+    where is_active
+) as active_customer;
 ```
 
 **Хорошо:**
 
 ```sql
-with x as (
+with active_customer as (
     select id
     from customer
-    where active
+    where is_active
 )
-select x.id
-from x;
+select active_customer.id
+from active_customer;
 ```
 
 **Обоснование.** Именованный CTE даёт подзапросу имя и фиксированное место
@@ -1295,14 +1312,14 @@ where deleted_at is null;
 **Плохо:**
 
 ```sql
-select c.id u_id
-from customer u;
+select c.id customer_id
+from customer c;
 ```
 
 **Хорошо:**
 
 ```sql
-select c.id as u_id
+select c.id as customer_id
 from customer as c;
 ```
 
@@ -1331,7 +1348,9 @@ from customer;
 **Хорошо:**
 
 ```sql
-select id, name
+select
+    id,
+    name
 from customer;
 ```
 
@@ -1353,7 +1372,9 @@ from customer;
 **Плохо:**
 
 ```sql
-select id, p.amount
+select
+    id,
+    p.amount
 from customer as c
 inner join purchase as p on p.customer_id = c.id;
 ```
@@ -1361,7 +1382,9 @@ inner join purchase as p on p.customer_id = c.id;
 **Хорошо:**
 
 ```sql
-select c.id, p.amount
+select
+    c.id,
+    p.amount
 from customer as c
 inner join purchase as p on p.customer_id = c.id;
 ```
@@ -1505,7 +1528,7 @@ python3 scripts/check.py --all
 2. Обсуждение идёт в PR. При неоднозначности применяется мета-принцип
    «единообразие важнее выбора»; спорные варианты фиксируются отдельным тикетом
    с одним предлагаемым вариантом и обоснованием.
-3. Утверждающий лицо (см. 9.5) принимает PR; после этого изменение попадает в
+3. Утверждающее лицо (см. 9.5) принимает PR; после этого изменение попадает в
    `STANDARD.md` и, если затронуты проверяемые правила, — в референсный конфиг
    линтера и корпус `examples/`.
 4. Версия стандарта обновляется по правилам 9.1.

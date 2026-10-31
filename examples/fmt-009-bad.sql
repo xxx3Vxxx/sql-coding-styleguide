@@ -1,8 +1,8 @@
 -- expected: LT02
-with x as (
+with active_customer as (
 select id
 from customer
-where active
+where is_active
 )
-select x.id
-from x;
+select active_customer.id
+from active_customer;

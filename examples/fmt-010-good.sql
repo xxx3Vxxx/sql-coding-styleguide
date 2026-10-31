@@ -1,5 +1,5 @@
 -- expected: none
 select c.id
 from customer as c
-where c.active
+where c.is_active
 order by c.id;

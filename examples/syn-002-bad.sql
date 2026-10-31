@@ -1,7 +1,7 @@
 -- expected: ST05
-select x.id
+select active_customer.id
 from (
     select id
     from customer
-    where active
-) as x;
+    where is_active
+) as active_customer;

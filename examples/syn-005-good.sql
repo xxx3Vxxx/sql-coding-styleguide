@@ -1,3 +1,3 @@
 -- expected: none
-select c.id as u_id
+select c.id as customer_id
 from customer as c;

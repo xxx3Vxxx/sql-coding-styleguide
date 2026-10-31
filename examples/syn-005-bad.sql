@@ -1,3 +1,3 @@
 -- expected: AL01, AL02
-select c.id u_id
-from customer u;
+select c.id customer_id
+from customer c;
