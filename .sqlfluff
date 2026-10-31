@@ -1,13 +1,14 @@
 # Референсный конфиг линтера (SQLFluff).
 #
-# Реализует ядро аспекта «Синтаксис» (SYN-001–SYN-007). По мере добавления
-# правил (тикеты 05–10) конфиг расширяется. Не добавляйте сюда правила,
-# не предусмотренные тикетом.
+# Реализует правила стандарта, проверяемые линтером. Текущее покрытие:
+# синтаксис (SYN-001–SYN-007), нейминг, часть 1 (NAM-001–NAM-007). По мере
+# добавления правил (тикеты 05, 06, 08, 10) конфиг расширяется. Не добавляйте
+# сюда правила, не предусмотренные тикетом.
 
 [sqlfluff]
 dialect = postgres
 templater = raw
-rules = convention.not_equal, AM05, ST05, CV05, AL01, AL02, AM04, RF02
+rules = convention.not_equal, AM05, ST05, CV05, AL01, AL02, AM04, RF02, CP02, RF04
 
 [sqlfluff:rules:convention.not_equal]
 # SYN-003: сравнение «не равно» — только через `<>` (ANSI), а не `!=`.
@@ -28,3 +29,11 @@ aliasing = explicit
 [sqlfluff:rules:aliasing.column]
 # SYN-005: явный `AS` для алиасов колонок.
 aliasing = explicit
+
+[sqlfluff:rules:capitalisation.identifiers]
+# NAM-001: имена объектов — snake_case (строчными буквами).
+extended_capitalisation_policy = snake
+
+[sqlfluff:rules:references.keywords]
+# NAM-003: не использовать ключевые слова SQL как идентификаторы (алиасы).
+unquoted_identifiers_policy = aliases
