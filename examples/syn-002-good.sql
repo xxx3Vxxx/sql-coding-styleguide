@@ -1,5 +1,7 @@
 -- expected: none
-with active_customer as (
+with
+active_customer as
+(
     select id
     from customer
     where is_active

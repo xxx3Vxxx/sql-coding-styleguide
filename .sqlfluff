@@ -98,6 +98,12 @@ keyword_line_position = leading
 # FMT-004: корневое ключевое слово — на новой строке.
 keyword_line_position = leading
 
+[sqlfluff:layout:type:common_table_expression]
+# FMT-015: канон CTE — имя по левому краю, скобка на своей строке. Конфиг канон
+# допускает, но не навязывает: attached-вид `as (` остаётся валидным, поэтому
+# `single:inline` ослаблен до `single`.
+spacing_within = single
+
 [sqlfluff:rules:layout.select_targets]
 # FMT-008: одна колонка (select-цель) на строку; «*» считается одной целью.
 wildcard_policy = single
