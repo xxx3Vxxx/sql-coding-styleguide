@@ -14,7 +14,10 @@
 - каждая секция `[sqlfluff:rules:*]` в конфиге сопровождена комментарием со
   ссылкой на ID правила, и все упомянутые ID существуют;
 - профили согласованы: `MUST` ↔ `error`, `SHOULD` ↔ `warning` (ключ `warnings`),
-  базовый профиль исключает SHOULD-проверяемые правила (`exclude_rules`).
+  базовый профиль исключает SHOULD-проверяемые правила (`exclude_rules`);
+- корпус фикстур соответствует признаку «проверяется линтером»: у каждого
+  правила «да» есть пара `examples/<id>-good.sql` + `examples/<id>-bad.sql`,
+  у правила «нет» фикстур нет, а все файлы названы по этому шаблону.
 
 Выход: 0 — всё согласовано; 1 — есть расхождения.
 
@@ -406,6 +409,48 @@ def main():
                 sorted(base["exclude_set"]), sorted(should_names)
             )
         ),
+    )
+
+    # 6) Корпус фикстур: инвариант «правило ↔ examples/<id>-{good,bad}.sql».
+    examples_dir = os.path.join(root, "examples")
+    fixture_by_rule = {}
+    off_pattern = []
+    for name in sorted(os.listdir(examples_dir)):
+        if not name.endswith(".sql"):
+            continue
+        match = re.match(r"^((?:fmt|nam|syn)-\d{3})-(good|bad)\.sql$", name)
+        if not match:
+            off_pattern.append(name)
+            continue
+        fixture_by_rule.setdefault(match.group(1), set()).add(match.group(2))
+
+    fixture_fail = []
+    for rule in doc_rules:
+        rid = rule["id"].lower()
+        kinds = fixture_by_rule.get(rid, set())
+        if rule["lint"]:
+            for kind in ("good", "bad"):
+                if kind not in kinds:
+                    fixture_fail.append(
+                        "{id}: «проверяется линтером: да», но нет examples/{rid}-{kind}.sql".format(
+                            id=rule["id"], rid=rid, kind=kind
+                        )
+                    )
+        elif kinds:
+            fixture_fail.append(
+                "{id}: «проверяется линтером: нет», но есть фикстуры ({kinds})".format(
+                    id=rule["id"], kinds=", ".join(sorted(kinds))
+                )
+            )
+    note(
+        not fixture_fail,
+        "корпус: у каждого правила «да» есть пара good/bad, у «нет» фикстур нет"
+        + ("" if not fixture_fail else "\n  - " + "\n  - ".join(fixture_fail)),
+    )
+    note(
+        not off_pattern,
+        "корпус: все файлы examples/*.sql названы по шаблону <ID>-good|bad.sql"
+        + ("" if not off_pattern else " (мимо шаблона: {})".format(", ".join(off_pattern))),
     )
 
     # Итог.
