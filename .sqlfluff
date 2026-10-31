@@ -2,15 +2,15 @@
 #
 # Реализует правила стандарта, проверяемые линтером. Текущее покрытие:
 # синтаксис, ядро (SYN-001–SYN-007); нейминг, часть 1 (NAM-001–NAM-007);
-# форматирование, часть 1 (FMT-001–FMT-007). По мере добавления правил
-# (тикеты 06, 08, 10) конфиг расширяется. Не добавляйте сюда правила,
-# не предусмотренные тикетом.
+# форматирование, часть 1 (FMT-001–FMT-007) и часть 2 (FMT-008–FMT-013).
+# По мере добавления правил (тикеты 08, 10) конфиг расширяется. Не добавляйте
+# сюда правила, не предусмотренные тикетом.
 
 [sqlfluff]
 dialect = postgres
 templater = raw
 max_line_length = 120
-rules = convention.not_equal, ambiguous.join, structure.subquery, convention.is_null, aliasing.table, aliasing.column, ambiguous.column_count, references.qualification, capitalisation.identifiers, references.keywords, capitalisation.keywords, capitalisation.functions, layout.spacing, layout.indent, layout.commas, layout.long_lines, layout.keyword_newline
+rules = convention.not_equal, ambiguous.join, structure.subquery, convention.is_null, aliasing.table, aliasing.column, ambiguous.column_count, references.qualification, capitalisation.identifiers, references.keywords, capitalisation.keywords, capitalisation.functions, layout.spacing, layout.indent, layout.commas, layout.long_lines, layout.keyword_newline, layout.select_targets, layout.end_of_file
 
 [sqlfluff:indentation]
 # FMT-001/FMT-002: отступ — пробел, шаг 4.
@@ -81,3 +81,7 @@ keyword_line_position = leading
 
 [sqlfluff:layout:type:limit_clause]
 keyword_line_position = leading
+
+[sqlfluff:rules:layout.select_targets]
+# FMT-008: одна колонка (select-цель) на строку; «*» считается одной целью.
+wildcard_policy = single
