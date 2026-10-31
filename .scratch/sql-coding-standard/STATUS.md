@@ -4,7 +4,7 @@
 
 ## Где мы находимся
 
-- **Ветка работы:** `integration/sql-coding-standard`, HEAD `636d209`, рабочее дерево чистое.
+- **Ветка работы:** `integration/sql-coding-standard`; последний содержательный коммит — `636d209` (code-review), рабочее дерево чистое.
 - **База (до реализации):** `master` @ `9b79f20`.
 - **Все коммиты реализации — на `integration/sql-coding-standard`; `master` пока НЕ тронут.**
 
