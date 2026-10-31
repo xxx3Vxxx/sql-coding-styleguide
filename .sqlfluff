@@ -1,14 +1,21 @@
 # Референсный конфиг линтера (SQLFluff).
 #
 # Реализует правила стандарта, проверяемые линтером. Текущее покрытие:
-# синтаксис (SYN-001–SYN-007), нейминг, часть 1 (NAM-001–NAM-007). По мере
-# добавления правил (тикеты 05, 06, 08, 10) конфиг расширяется. Не добавляйте
-# сюда правила, не предусмотренные тикетом.
+# синтаксис, ядро (SYN-001–SYN-007); нейминг, часть 1 (NAM-001–NAM-007);
+# форматирование, часть 1 (FMT-001–FMT-007). По мере добавления правил
+# (тикеты 06, 08, 10) конфиг расширяется. Не добавляйте сюда правила,
+# не предусмотренные тикетом.
 
 [sqlfluff]
 dialect = postgres
 templater = raw
-rules = convention.not_equal, AM05, ST05, CV05, AL01, AL02, AM04, RF02, CP02, RF04
+max_line_length = 120
+rules = convention.not_equal, ambiguous.join, structure.subquery, convention.is_null, aliasing.table, aliasing.column, ambiguous.column_count, references.qualification, capitalisation.identifiers, references.keywords, capitalisation.keywords, capitalisation.functions, layout.spacing, layout.indent, layout.commas, layout.long_lines, layout.keyword_newline
+
+[sqlfluff:indentation]
+# FMT-001/FMT-002: отступ — пробел, шаг 4.
+indent_unit = space
+tab_space_size = 4
 
 [sqlfluff:rules:convention.not_equal]
 # SYN-003: сравнение «не равно» — только через `<>` (ANSI), а не `!=`.
@@ -37,3 +44,40 @@ extended_capitalisation_policy = snake
 [sqlfluff:rules:references.keywords]
 # NAM-003: не использовать ключевые слова SQL как идентификаторы (алиасы).
 unquoted_identifiers_policy = aliases
+
+[sqlfluff:rules:capitalisation.keywords]
+# FMT-006: регистр ключевых слов — нижний.
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.functions]
+# FMT-006: регистр функций — нижний.
+extended_capitalisation_policy = lower
+
+[sqlfluff:layout:type:comma]
+# FMT-005: запятые — trailing; FMT-007: пробел после запятой.
+spacing_before = touch
+spacing_after = single
+line_position = trailing
+
+[sqlfluff:layout:type:binary_operator]
+# FMT-007: пробелы вокруг бинарных операторов.
+spacing_before = single
+spacing_after = single
+
+[sqlfluff:layout:type:comparison_operator]
+# FMT-007: пробелы вокруг операторов сравнения.
+spacing_before = single
+spacing_after = single
+
+[sqlfluff:layout:type:select_clause]
+# FMT-004: корневое ключевое слово — на новой строке.
+keyword_line_position = leading
+
+[sqlfluff:layout:type:from_clause]
+keyword_line_position = leading
+
+[sqlfluff:layout:type:join_clause]
+keyword_line_position = leading
+
+[sqlfluff:layout:type:limit_clause]
+keyword_line_position = leading
