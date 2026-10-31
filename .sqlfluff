@@ -1,14 +1,61 @@
 # Референсный конфиг линтера (SQLFluff).
 #
-# ВНИМАНИЕ: на этапе трейсер-пули (тикет 01) здесь ровно одно правило —
-# SYN-003 (`<>` вместо `!=`). По мере добавления правил (тикеты 05–10)
-# конфиг расширяется. Не добавляйте сюда правила, не предусмотренные тикетом.
+# Правила добавляются по мере готовности тикетов (05–10). Сейчас в конфиге:
+# форматирование, часть 1 (FMT-001..FMT-007, тикет 05) и SYN-003 (тикет 01).
+# Не добавляйте сюда правила, не предусмотренные тикетом.
 
 [sqlfluff]
 dialect = postgres
 templater = raw
-rules = convention.not_equal
+rules = convention.not_equal, capitalisation.keywords, capitalisation.functions, layout.spacing, layout.indent, layout.commas, layout.long_lines, layout.keyword_newline
+max_line_length = 120
 
 [sqlfluff:rules:convention.not_equal]
 # SYN-003: сравнение «не равно» — только через `<>` (ANSI), а не `!=`.
 preferred_not_equal_style = ansi
+
+# --- форматирование, часть 1 (тикет 05) ---
+
+[sqlfluff:indentation]
+# FMT-001: отступ — пробел, не таб.
+indent_unit = space
+# FMT-002: шаг отступа — 4 пробела.
+tab_space_size = 4
+
+[sqlfluff:rules:capitalisation.keywords]
+# FMT-006: регистр ключевых слов — нижний.
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.functions]
+# FMT-006: регистр функций — нижний.
+extended_capitalisation_policy = lower
+
+[sqlfluff:layout:type:comma]
+# FMT-005: запятые — trailing; FMT-007: пробел после запятой.
+spacing_before = touch
+spacing_after = single
+line_position = trailing
+
+[sqlfluff:layout:type:binary_operator]
+# FMT-007: пробелы вокруг бинарных операторов.
+spacing_before = single
+spacing_after = single
+
+[sqlfluff:layout:type:comparison_operator]
+# FMT-007: пробелы вокруг операторов сравнения.
+spacing_before = single
+spacing_after = single
+
+# FMT-004: каждое корневое ключевое слово — на новой строке.
+# (WHERE/GROUP BY/ORDER BY/HAVING уже в дефолте SQLFluff; дополняем оставшиеся.)
+[sqlfluff:layout:type:select_clause]
+keyword_line_position = leading
+
+[sqlfluff:layout:type:from_clause]
+keyword_line_position = leading
+
+[sqlfluff:layout:type:join_clause]
+keyword_line_position = leading
+
+[sqlfluff:layout:type:limit_clause]
+keyword_line_position = leading
