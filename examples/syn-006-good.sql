@@ -1,3 +1,5 @@
 -- expected: none
-select id, name
+select
+    id,
+    name
 from users;
