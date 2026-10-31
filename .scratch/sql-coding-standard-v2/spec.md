@@ -63,5 +63,6 @@ Status: ready-for-agent
 
 ## Further Notes
 
-- Исходное предложение — `new-proposal.tmp.md` в корне репозитория.
+- Черновик-предложение к 0.2.0 зафиксирован в этой спеке; исходный файл
+  `new-proposal.tmp.md` удалён (см. историю git).
 - Первая версия процесса и ADR — `.scratch/sql-coding-standard/`.

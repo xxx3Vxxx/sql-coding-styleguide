@@ -62,4 +62,6 @@ python3 scripts/check_consistency.py                # сверка докуме�
 - Линтер: SQLFluff `4.5.0`; версия закреплена в `requirements.txt`, локально — в
   `.venv` (gitignore'd).
 - Справка по запуску и интроспекции правил SQLFluff — `docs/agents/sqlfluff-api.md`.
-- Исходное предложение к 0.2.0 — `new-proposal.tmp.md` в корне репозитория.
+- Черновик-предложение к 0.2.0 перенесён в спеку
+  `sql-coding-standard-v2/spec.md`; исходный файл `new-proposal.tmp.md` удалён
+  (см. историю git).
