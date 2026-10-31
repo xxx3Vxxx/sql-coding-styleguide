@@ -15,9 +15,11 @@
 - Тикеты **01–10** реализованы, ревью пройдено и помечены `done`.
 - **Тикет 11:** агентская часть (пункты 2–5) закрыта; статус → `ready-for-human`.
 - **Проверки зелёные:**
+  - `python3 scripts/check.py --all` → корпус + 16 проверок согласованности, всё ок.
   - `python3 scripts/check.py` → `OK: 40 фикстур совпали` (полный профиль).
   - `python3 scripts/check.py --config .sqlfluff.base` → 40 фикстур (базовый профиль).
-  - `python3 scripts/check_consistency.py` → 14 проверок, согласованность подтверждена.
+  - `python3 scripts/check_consistency.py` → 16 проверок, согласованность подтверждена.
+- **Шлюз:** CI (`.github/workflows/check.yml`) прогоняет `check.py --all` на push в `master` и на PR; версия линтера закреплена в `requirements.txt` (`sqlfluff==4.5.0`).
 - Покрытие `MUST`-правил линтером: **20 из 26 (`≈77%`)**; всего 34 правила (13 FMT + 14 NAM + 7 SYN), 26 MUST, 8 SHOULD.
 - 34/34 блока «Хорошо» из `STANDARD.md` чистые; примеры и фикстуры согласованы (code-review, коммит `636d209`).
 
@@ -39,6 +41,7 @@
 
 ```bash
 cd /home/vvv/sql-coding-styleguide
+python3 scripts/check.py --all                      # корпус + сверка согласованности (как в CI)
 python3 scripts/check.py                            # корпус, полный профиль
 python3 scripts/check.py --config .sqlfluff.base    # корпус, базовый профиль
 python3 scripts/check_consistency.py                # сверка документа и конфига
@@ -46,4 +49,6 @@ python3 scripts/check_consistency.py                # сверка докуме�
 
 ## Окружение
 
-- Линтер: SQLFluff `4.5.0` в `/home/vvv/sql-coding-styleguide/.venv` (gitignore'd).
+- Линтер: SQLFluff `4.5.0`; версия закреплена в `requirements.txt`, локально — в `.venv` (gitignore'd).
+- Справка по запуску и интроспекции правил SQLFluff — `docs/agents/sqlfluff-api.md`.
+- Репозиторий опубликован: `https://github.com/xxx3Vxxx/sql-coding-styleguide` (ветка `master`, автор коммитов — `xxx3Vxxx <ionaureola@gmail.com>`).
