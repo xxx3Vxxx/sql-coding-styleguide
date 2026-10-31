@@ -10,6 +10,12 @@
 - на «хорошем» примере (`none`) линтер молчит;
 - на «плохом» срабатывают ровно перечисленные правила.
 
+Режимы:
+  (без флагов)       корпус по полному профилю `.sqlfluff` (автоподхват);
+  --config <файл>    выбрать конфиг (напр. `.sqlfluff.base` для базового);
+  --consistency      только сверка согласованности (check_consistency.py);
+  --all              корпус + сверка согласованности одним прогоном.
+
 Выход: 0 — всё совпало; 1 — есть расхождения.
 """
 import glob
@@ -21,6 +27,16 @@ import subprocess
 import sys
 
 EXPECTED_RE = re.compile(r"^\s*--\s*expected:\s*(.+?)\s*$")
+
+USAGE = """\
+Использование:
+  python3 scripts/check.py [--config <файл>] [--consistency | --all]
+
+  --config <файл>   Конфиг SQLFluff для прогона корпуса (напр. `.sqlfluff.base`).
+  --consistency     Только сверка согласованности документа и конфига.
+  --all             Корпус + сверка согласованности.
+  -h, --help        Эта справка.
+"""
 
 
 def repo_root():
@@ -56,7 +72,8 @@ def read_expected(path):
     return None
 
 
-def main():
+def run_corpus(config_path=None):
+    """Прогон линтера по корпусу `examples/`; возвращает код выхода."""
     sqlfluff = resolve_sqlfluff()
     if not sqlfluff:
         print("ERROR: sqlfluff не найден. Укажите SQLFLUFF или установите линтер.",
@@ -83,11 +100,12 @@ def main():
                 rel=os.path.relpath(path, repo_root())))
         return 1
 
-    proc = subprocess.run(
-        [sqlfluff, "lint", "--format", "json", examples_dir],
-        capture_output=True,
-        text=True,
-    )
+    cmd = [sqlfluff, "lint", "--format", "json"]
+    if config_path:
+        cmd += ["--config", config_path]
+    cmd.append(examples_dir)
+
+    proc = subprocess.run(cmd, capture_output=True, text=True)
     try:
         payload = json.loads(proc.stdout)
     except json.JSONDecodeError:
@@ -117,8 +135,40 @@ def main():
     if mismatches:
         print("{n} фикстур не совпали".format(n=mismatches), file=sys.stderr)
         return 1
-    print("OK: {n} фикстур совпали".format(n=len(fixtures)))
+    profile = config_path or ".sqlfluff (по умолчанию)"
+    print("OK: {n} фикстур совпали (конфиг: {profile})".format(
+        n=len(fixtures), profile=profile))
     return 0
+
+
+def main(argv=None):
+    args = list(sys.argv[1:] if argv is None else argv)
+    if "--help" in args or "-h" in args:
+        print(USAGE)
+        return 0
+
+    config_path = None
+    if "--config" in args:
+        idx = args.index("--config")
+        if idx + 1 >= len(args):
+            print("ERROR: `--config` требует значение", file=sys.stderr)
+            print(USAGE, file=sys.stderr)
+            return 2
+        config_path = args[idx + 1]
+
+    do_consistency = "--consistency" in args or "--all" in args
+    do_corpus = ("--all" in args) or ("--consistency" not in args)
+
+    code = 0
+    if do_corpus:
+        code = max(code, run_corpus(config_path))
+    if do_consistency:
+        scripts_dir = os.path.dirname(os.path.abspath(__file__))
+        if scripts_dir not in sys.path:
+            sys.path.insert(0, scripts_dir)
+        import check_consistency  # noqa: E402 (локальный импорт, тот же каталог)
+        code = max(code, check_consistency.main())
+    return code
 
 
 if __name__ == "__main__":

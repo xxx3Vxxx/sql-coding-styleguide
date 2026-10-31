@@ -1373,7 +1373,98 @@ inner join orders as o on o.user_id = u.id;
 
 ## 8. Референсный конфиг линтера и маппинг
 
-_Черновик. Заполняется тикетом 10._
+Референсный конфиг линтера — **SQLFluff** (ADR-0005). Уровни нормативности
+(§4) проецируются на уровень диагностик линтера по правилу:
+
+- `MUST` ↔ `error` — нарушение блокирует сборку (линтер возвращает ненулевой код);
+- `SHOULD` ↔ `warning` — нарушение показывается, но не блокирует;
+- `MAY` — линтером не проверяется.
+
+### 8.1. Два профиля
+
+Конфиг поставляется в двух профилях:
+
+- **Базовый («errors only»)** — активны только правила уровня `MUST`,
+  помечаются как `error`. Файл `.sqlfluff.base`.
+- **Полный («aspirational»)** — правила `MUST` как `error` плюс правила
+  `SHOULD` как `warning` (перечень — ключ `warnings` в конфиге). Файл
+  `.sqlfluff`.
+
+Запуск:
+
+```bash
+# полный профиль (.sqlfluff подхватывается автоматически)
+sqlfluff lint examples/
+
+# базовый профиль («errors only»)
+sqlfluff lint --config .sqlfluff.base examples/
+```
+
+На текущий момент **ни одно правило уровня `SHOULD` не проверяется линтером**
+(все проверяемые правила — `MUST`, см. таблицу ниже), поэтому оба профиля дают
+один и тот же результат. Инфраструктура `warning`-правил заложена заранее:
+ключ `warnings` в `.sqlfluff` и ключ `exclude_rules` в `.sqlfluff.base`. При
+появлении SHOULD-проверяемого правила его нужно добавить в оба файла согласно
+комментариям в них — тогда полный профиль будет показывать его как `warning`,
+а базовый — не проверять вовсе.
+
+### 8.2. Таблица маппинга
+
+Строки ниже выведены из правил §5–§7 и совпадают с их полями «Проверяется
+линтером». Колонка «SQLFluff» — код и имя правила линтера (и его конфиг);
+прочерк «—» означает, что правило ядром SQLFluff не проверяется.
+
+| ID | Уровень | Проверяется линтером | SQLFluff (правило + конфиг) |
+| --- | --- | --- | --- |
+| FMT-001 | MUST | да | `LT02` `layout.indent` — `indent_unit = space` |
+| FMT-002 | MUST | да | `LT02` `layout.indent` — `tab_space_size = 4` |
+| FMT-003 | MUST | да | `LT05` `layout.long_lines` — `max_line_length = 120` |
+| FMT-004 | MUST | да | `LT14` `layout.keyword_newline` — `keyword_line_position = leading` |
+| FMT-005 | MUST | да | `LT04` `layout.commas` — `line_position = trailing` |
+| FMT-006 | MUST | да | `CP01` `capitalisation.keywords`, `CP03` `capitalisation.functions` |
+| FMT-007 | MUST | да | `LT01` `layout.spacing` |
+| FMT-008 | MUST | да | `LT09` `layout.select_targets` — `wildcard_policy = single` |
+| FMT-009 | MUST | да | `LT02` `layout.indent` (отступ вложенных блоков) |
+| FMT-010 | MUST | да | `LT02` `layout.indent` (left-align корневых ключевых слов) |
+| FMT-011 | SHOULD | нет | — |
+| FMT-012 | SHOULD | нет | — |
+| FMT-013 | MUST | да | `LT12` `layout.end_of_file`; trailing whitespace — `LT01` `layout.spacing` |
+| NAM-001 | MUST | да | `CP02` `capitalisation.identifiers` — `extended_capitalisation_policy = snake` |
+| NAM-002 | SHOULD | нет | — |
+| NAM-003 | MUST | да | `RF04` `references.keywords` — `unquoted_identifiers_policy = aliases` |
+| NAM-004 | MUST | нет | — |
+| NAM-005 | MUST | нет | — |
+| NAM-006 | MUST | нет | — |
+| NAM-007 | MUST | нет | — |
+| NAM-008 | MUST | нет | — |
+| NAM-009 | MUST | нет | — |
+| NAM-010 | SHOULD | нет | — |
+| NAM-011 | SHOULD | нет | — |
+| NAM-012 | SHOULD | нет | — |
+| NAM-013 | SHOULD | нет | — |
+| NAM-014 | SHOULD | нет | — |
+| SYN-001 | MUST | да | `AM05` `ambiguous.join` — `fully_qualify_join_types = inner` |
+| SYN-002 | MUST | да | `ST05` `structure.subquery` — `forbid_subquery_in = both` |
+| SYN-003 | MUST | да | `CV01` `convention.not_equal` — `preferred_not_equal_style = ansi` |
+| SYN-004 | MUST | да | `CV05` `convention.is_null` |
+| SYN-005 | MUST | да | `AL01` `aliasing.table`, `AL02` `aliasing.column` — `aliasing = explicit` |
+| SYN-006 | MUST | да | `AM04` `ambiguous.column_count` |
+| SYN-007 | MUST | да | `RF02` `references.qualification` |
+
+### 8.3. Проверка согласованности
+
+Скрипт `scripts/check_consistency.py` сверяет, что ID правил в `STANDARD.md`,
+таблица §8.2 и референсный конфиг не расходятся: у каждого правила,
+помеченного «проверяется линтером: да», есть включённое правило SQLFluff, а
+каждое включённое правило линтера ссылается на правило стандарта.
+
+```bash
+# согласованность документа и конфига
+python3 scripts/check_consistency.py
+
+# корпус примеров + согласованность одним прогоном
+python3 scripts/check.py --all
+```
 
 ## 9. Процесс: версии, изменение, отступления, внедрение
 

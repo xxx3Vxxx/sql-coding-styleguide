@@ -1,0 +1,101 @@
+# Референсный конфиг линтера (SQLFluff) — базовый («errors only») профиль.
+#
+# Активны только правила уровня MUST (маркируются как `error` и блокируют
+# сборку). Проверяемые правила уровня SHOULD исключаются через `exclude_rules`
+# ниже; `warning`-режим здесь не используется. Правила MAY не проверяются.
+#
+# Сейчас SHOULD-проверяемых правил нет, поэтому этот профиль совпадает с
+# полным профилем (`.sqlfluff`). Когда SHOULD-проверяемое правило появится,
+# оно добавляется: в `.sqlfluff` — в `rules` и `warnings`, сюда — в
+# `exclude_rules`. Синхронность проверяет scripts/check_consistency.py.
+#
+# Маппинг «ID правила стандарта ↔ правило SQLFluff» см. в STANDARD.md §8.
+# Запуск: `sqlfluff lint --config .sqlfluff.base <путь>`.
+
+[sqlfluff]
+dialect = postgres
+templater = raw
+max_line_length = 120
+rules = convention.not_equal, ambiguous.join, structure.subquery, convention.is_null, aliasing.table, aliasing.column, ambiguous.column_count, references.qualification, capitalisation.identifiers, references.keywords, capitalisation.keywords, capitalisation.functions, layout.spacing, layout.indent, layout.commas, layout.long_lines, layout.keyword_newline, layout.select_targets, layout.end_of_file
+# SHOULD-проверяемые правила для базового профиля исключаются (не проверяются).
+# Сейчас таких нет; при появлении — перечислить их имена через запятую.
+exclude_rules =
+
+[sqlfluff:indentation]
+# FMT-001/FMT-002: отступ — пробел, шаг 4.
+# FMT-009: отступ вложенных блоков — один уровень (4 пробела).
+# FMT-010: выравнивание корневых ключевых слов — по левому краю (без «реки»).
+indent_unit = space
+tab_space_size = 4
+
+[sqlfluff:rules:convention.not_equal]
+# SYN-003: сравнение «не равно» — только через `<>` (ANSI), а не `!=`.
+preferred_not_equal_style = ansi
+
+[sqlfluff:rules:ambiguous.join]
+# SYN-001: явный тип JOIN — `INNER JOIN`, а не `JOIN`.
+fully_qualify_join_types = inner
+
+[sqlfluff:rules:structure.subquery]
+# SYN-002: CTE вместо вложенных подзапросов (запрещены в FROM и JOIN).
+forbid_subquery_in = both
+
+[sqlfluff:rules:aliasing.table]
+# SYN-005: явный `AS` для алиасов таблиц.
+aliasing = explicit
+
+[sqlfluff:rules:aliasing.column]
+# SYN-005: явный `AS` для алиасов колонок.
+aliasing = explicit
+
+[sqlfluff:rules:capitalisation.identifiers]
+# NAM-001: имена объектов — snake_case (строчными буквами).
+extended_capitalisation_policy = snake
+
+[sqlfluff:rules:references.keywords]
+# NAM-003: не использовать ключевые слова SQL как идентификаторы (алиасы).
+unquoted_identifiers_policy = aliases
+
+[sqlfluff:rules:capitalisation.keywords]
+# FMT-006: регистр ключевых слов — нижний.
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.functions]
+# FMT-006: регистр функций — нижний.
+extended_capitalisation_policy = lower
+
+[sqlfluff:layout:type:comma]
+# FMT-005: запятые — trailing; FMT-007: пробел после запятой.
+spacing_before = touch
+spacing_after = single
+line_position = trailing
+
+[sqlfluff:layout:type:binary_operator]
+# FMT-007: пробелы вокруг бинарных операторов.
+spacing_before = single
+spacing_after = single
+
+[sqlfluff:layout:type:comparison_operator]
+# FMT-007: пробелы вокруг операторов сравнения.
+spacing_before = single
+spacing_after = single
+
+[sqlfluff:layout:type:select_clause]
+# FMT-004: корневое ключевое слово — на новой строке.
+keyword_line_position = leading
+
+[sqlfluff:layout:type:from_clause]
+# FMT-004: корневое ключевое слово — на новой строке.
+keyword_line_position = leading
+
+[sqlfluff:layout:type:join_clause]
+# FMT-004: корневое ключевое слово — на новой строке.
+keyword_line_position = leading
+
+[sqlfluff:layout:type:limit_clause]
+# FMT-004: корневое ключевое слово — на новой строке.
+keyword_line_position = leading
+
+[sqlfluff:rules:layout.select_targets]
+# FMT-008: одна колонка (select-цель) на строку; «*» считается одной целью.
+wildcard_policy = single

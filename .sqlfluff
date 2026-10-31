@@ -1,19 +1,32 @@
-# Референсный конфиг линтера (SQLFluff).
+# Референсный конфиг линтера (SQLFluff) — полный («aspirational») профиль.
 #
-# Реализует правила стандарта, проверяемые линтером. Текущее покрытие:
-# синтаксис, ядро (SYN-001–SYN-007); нейминг, часть 1 (NAM-001–NAM-007);
-# форматирование, часть 1 (FMT-001–FMT-007) и часть 2 (FMT-008–FMT-013).
-# По мере добавления правил (тикеты 08, 10) конфиг расширяется. Не добавляйте
-# сюда правила, не предусмотренные тикетом.
+# Профили и уровни нормативности:
+#   * Полный профиль (этот файл) — правила MUST как `error` + правила SHOULD
+#     как `warning` (перечень SHOULD-проверяемых правил см. в `warnings` ниже).
+#   * Базовый профиль — `.sqlfluff.base`, только MUST как `error` (SHOULD
+#     исключены через `exclude_rules`). Запуск: `sqlfluff lint --config
+#     .sqlfluff.base <путь>`.
+#   * Правила MAY линтером не проверяются.
+# Сейчас SHOULD-проверяемых правил нет (все проверяемые правила — MUST),
+# поэтому оба профиля дают одинаковый результат.
+#
+# Маппинг «ID правила стандарта ↔ правило SQLFluff» см. в STANDARD.md §8.
+# Комментарии у каждой секции ниже фиксируют этот маппинг; их проверяет
+# скрипт scripts/check_consistency.py.
 
 [sqlfluff]
 dialect = postgres
 templater = raw
 max_line_length = 120
 rules = convention.not_equal, ambiguous.join, structure.subquery, convention.is_null, aliasing.table, aliasing.column, ambiguous.column_count, references.qualification, capitalisation.identifiers, references.keywords, capitalisation.keywords, capitalisation.functions, layout.spacing, layout.indent, layout.commas, layout.long_lines, layout.keyword_newline, layout.select_targets, layout.end_of_file
+# SHOULD-проверяемые правила → warning (не блокируют сборку). Сейчас таких нет:
+# при появлении — перечислить их имена через запятую, напр. `warnings = ...`.
+warnings =
 
 [sqlfluff:indentation]
 # FMT-001/FMT-002: отступ — пробел, шаг 4.
+# FMT-009: отступ вложенных блоков — один уровень (4 пробела).
+# FMT-010: выравнивание корневых ключевых слов — по левому краю (без «реки»).
 indent_unit = space
 tab_space_size = 4
 
@@ -74,12 +87,15 @@ spacing_after = single
 keyword_line_position = leading
 
 [sqlfluff:layout:type:from_clause]
+# FMT-004: корневое ключевое слово — на новой строке.
 keyword_line_position = leading
 
 [sqlfluff:layout:type:join_clause]
+# FMT-004: корневое ключевое слово — на новой строке.
 keyword_line_position = leading
 
 [sqlfluff:layout:type:limit_clause]
+# FMT-004: корневое ключевое слово — на новой строке.
 keyword_line_position = leading
 
 [sqlfluff:rules:layout.select_targets]
