@@ -1,3 +1,16 @@
+## Проверка
+
+Стандарт проверяется скриптами; одна команда запускает обе проверки:
+
+```bash
+python3 scripts/check.py --all
+```
+
+Это корпус примеров (`scripts/check.py`, линтер по `examples/`) и сверка
+согласованности документа, §8-маппинга и конфигов (`scripts/check_consistency.py`).
+Нужен SQLFluff (версия — `requirements.txt`). Запуск линтера и интроспекция его
+правил — `docs/agents/sqlfluff-api.md`.
+
 ## Agent skills
 
 ### Issue tracker

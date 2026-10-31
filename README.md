@@ -12,11 +12,12 @@
 
 ```bash
 python3 -m venv .venv && . .venv/bin/activate
-pip install sqlfluff
+pip install -r requirements.txt
 
-python3 scripts/check.py                          # корпус примеров, полный профиль
-python3 scripts/check.py --config .sqlfluff.base  # корпус примеров, базовый профиль
-python3 scripts/check_consistency.py              # сверка документа и конфига
+python3 scripts/check.py --all                    # корпус + сверка согласованности
+python3 scripts/check.py                          # только корпус, полный профиль
+python3 scripts/check.py --config .sqlfluff.base  # только корпус, базовый профиль
+python3 scripts/check_consistency.py              # только сверка документа и конфига
 ```
 
 Ожидаемый результат: `OK: 40 фикстур совпали` и `согласованность документа и конфига подтверждена`.
@@ -28,12 +29,14 @@ python3 scripts/check_consistency.py              # сверка докумен�
 | `STANDARD.md` | Сам стандарт: принципы, критерии, уровни нормативности, правила по аспектам, референсный конфиг, процесс |
 | `GLOSSARY.md` | Канон терминов (аспект, правило, отступление и т. д.) |
 | `.sqlfluff`, `.sqlfluff.base` | Референсный конфиг линтера: полный и базовый профили |
+| `requirements.txt` | Закреплённая версия SQLFluff |
+| `.github/workflows/check.yml` | CI: `check.py --all` на push и pull request |
 | `examples/` | Корпус «плохо/хорошо» на каждое правило — им проверяется конфиг |
 | `scripts/check.py` | Прогоняет линтер по корпусу и сверяет ожидаемый результат |
 | `scripts/check_consistency.py` | Проверяет, что правила в документе и маппинг в конфиге не расходятся |
 | `docs/adr/` | Архитектурные решения (объём, приоритет диалектов, выбор линтера и др.) |
 | `docs/research/` | Исследования-обоснования: обзоры стилевых руководств, критериев, линтеров |
-| `docs/agents/` | Настройка репозитория для агентских инструментов (трекер, домен, метки) |
+| `docs/agents/` | Справка для агентов: трекер, домен, метки, API и запуск SQLFluff |
 
 ## Область и границы
 

@@ -1,0 +1,23 @@
+name: check
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  standard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Установить линтер
+        run: pip install -r requirements.txt
+
+      - name: Корпус примеров и сверка согласованности
+        run: python3 scripts/check.py --all
