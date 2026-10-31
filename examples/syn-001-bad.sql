@@ -1,4 +1,4 @@
 -- expected: AM05
-select a.id
-from users as a
-join orders as b on b.user_id = a.id;
+select c.id
+from customer as c
+join purchase as p on p.customer_id = c.id;

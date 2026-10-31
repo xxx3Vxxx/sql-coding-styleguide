@@ -1,3 +1,3 @@
 -- expected: none
 select id
-from users;
+from customer;

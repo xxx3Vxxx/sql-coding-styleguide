@@ -1,4 +1,4 @@
 -- expected: CV05
 select id
-from users
+from customer
 where deleted_at = null;

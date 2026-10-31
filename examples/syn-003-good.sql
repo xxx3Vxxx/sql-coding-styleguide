@@ -1,4 +1,4 @@
 -- expected: none
 select id
-from users
+from customer
 where id <> 10;

@@ -2,4 +2,4 @@
 select
     id,
     name
-from users;
+from customer;

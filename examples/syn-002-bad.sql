@@ -2,6 +2,6 @@
 select x.id
 from (
     select id
-    from users
+    from customer
     where active
 ) as x;

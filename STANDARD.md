@@ -158,7 +158,7 @@ SQLite не ломается (см. `docs/adr/0003-dialect-priority.md`).
 select
 →id,
 →name
-from users;
+from customer;
 ```
 
 **Хорошо:**
@@ -167,7 +167,7 @@ from users;
 select
     id,
     name
-from users;
+from customer;
 ```
 
 **Обоснование.** Ширина табуляции зависит от редактора и настроек, поэтому
@@ -192,7 +192,7 @@ from users;
 select
   id,
   name
-from users;
+from customer;
 ```
 
 **Хорошо:**
@@ -201,7 +201,7 @@ from users;
 select
     id,
     name
-from users;
+from customer;
 ```
 
 **Обоснование.** 4 пробела — типовая настройка большинства инструментов и
@@ -226,7 +226,7 @@ from users;
 ```sql
 select
     'this is an example of an extremely long line of text that pushes the total line length beyond the one hundred and twenty character limit' as note
-from users;
+from customer;
 ```
 
 **Хорошо:**
@@ -235,7 +235,7 @@ from users;
 select
     'short note' as note,
     'another note' as extra
-from users;
+from customer;
 ```
 
 **Обоснование.** Слишком длинные строки не читаются в режиме «окно редактора +
@@ -259,14 +259,14 @@ from users;
 **Плохо:**
 
 ```sql
-select id from users where id = 1 order by id limit 5;
+select id from customer where id = 1 order by id limit 5;
 ```
 
 **Хорошо:**
 
 ```sql
 select id
-from users
+from customer
 where id = 1
 order by id
 limit 5;
@@ -295,7 +295,7 @@ limit 5;
 select
     id
     , name
-from users;
+from customer;
 ```
 
 **Хорошо:**
@@ -304,7 +304,7 @@ from users;
 select
     id,
     name
-from users;
+from customer;
 ```
 
 **Обоснование.** Trailing-запятая совпадает с дефолтом SQLFluff и большинством
@@ -327,7 +327,7 @@ from users;
 ```sql
 SELECT
     COUNT(*) AS total
-FROM users
+FROM customer
 WHERE id > 0;
 ```
 
@@ -336,7 +336,7 @@ WHERE id > 0;
 ```sql
 select
     count(*) as total
-from users
+from customer
 where id > 0;
 ```
 
@@ -364,7 +364,7 @@ where id > 0;
 select
     id,
     name
-from users
+from customer
 where id=10 and id in (1,2);
 ```
 
@@ -374,7 +374,7 @@ where id=10 and id in (1,2);
 select
     id,
     name
-from users
+from customer
 where id = 10 and id in (1, 2);
 ```
 
@@ -400,7 +400,7 @@ where id = 10 and id in (1, 2);
 
 ```sql
 select id, name, email
-from users;
+from customer;
 ```
 
 **Хорошо:**
@@ -410,7 +410,7 @@ select
     id,
     name,
     email
-from users;
+from customer;
 ```
 
 **Обоснование.** По одной колонке на строку список читается вертикально и
@@ -436,7 +436,7 @@ from users;
 ```sql
 with x as (
 select id
-from users
+from customer
 where active
 )
 select x.id
@@ -448,7 +448,7 @@ from x;
 ```sql
 with x as (
     select id
-    from users
+    from customer
     where active
 )
 select x.id
@@ -475,19 +475,19 @@ from x;
 **Плохо:**
 
 ```sql
-select u.id
-    from users as u
-    where u.active
-    order by u.id;
+select c.id
+    from customer as c
+    where c.active
+    order by c.id;
 ```
 
 **Хорошо:**
 
 ```sql
-select u.id
-from users as u
-where u.active
-order by u.id;
+select c.id
+from customer as c
+where c.active
+order by c.id;
 ```
 
 **Обоснование.** «Река» (выравнивание ключевых слов и значений по правому краю
@@ -511,26 +511,26 @@ order by u.id;
 **Плохо:**
 
 ```sql
-with active_users as (
+with active_customer as (
     select id
-    from users
+    from customer
     where is_active
 )
-select a.id
-from active_users as a;
+select c.id
+from active_customer as c;
 ```
 
 **Хорошо:**
 
 ```sql
-with active_users as (
+with active_customer as (
     select id
-    from users
+    from customer
     where is_active
 )
 
-select a.id
-from active_users as a;
+select c.id
+from active_customer as c;
 ```
 
 **Обоснование.** Пустая строка группирует связанные строки в «абзацы» и
@@ -552,11 +552,11 @@ from active_users as a;
 **Плохо:**
 
 ```sql
--- выбираем id и name из таблицы users
+-- выбираем id и name из таблицы customer
 select
     id,
     name
-from users
+from customer
 where is_active;
 ```
 
@@ -567,7 +567,7 @@ where is_active;
 select
     id,
     name
-from users
+from customer
 where is_active;
 ```
 
@@ -592,14 +592,14 @@ where is_active;
 
 ```sql
 select id
-from users;$
+from customer;$
 ```
 
 **Хорошо:**
 
 ```sql
 select id
-from users;
+from customer;
 ```
 
 **Обоснование.** Отсутствие финального перевода строки и «висячие» пробелы в
@@ -770,7 +770,10 @@ create table customer_order (
 **Уровень нормативности:** MUST.
 
 **Правило.** Имена таблиц — в единственном числе: `customer_order`, а не
-`customer_orders`.
+`customer_orders`. Если единственное число совпадает с зарезервированным
+словом (`order`, `user`, `group`), выберите другое существительное — запрет
+зарезервированных слов NAM-003 имеет приоритет (например, `purchase` вместо
+`order`).
 
 **Плохо:**
 
@@ -877,21 +880,21 @@ create table customer (
 **Уровень нормативности:** MUST.
 
 **Правило.** Одноколоночный первичный ключ любой таблицы называйте `id`
-(`users.id`, `orders.id`). Имя `<таблица>_id` (`user_id`) зарезервировано за
+(`customer.id`, `purchase.id`). Имя `<таблица>_id` (`customer_id`) зарезервировано за
 внешними ключами (см. NAM-009) и для первичного ключа не используется.
 
 **Плохо:**
 
 ```sql
-create table users (
-    user_id int primary key
+create table customer (
+    customer_id int primary key
 );
 ```
 
 **Хорошо:**
 
 ```sql
-create table users (
+create table customer (
     id int primary key
 );
 ```
@@ -900,7 +903,7 @@ create table users (
 ссылку `t.id` однозначной: читатель без сверки с DDL знает, что `id` — это
 первичный ключ, а `<таблица>_id` — внешний. Одно имя на весь проект также
 улучшает grep-ability (у `id` ровно один смысл) и сокращает шум в условиях
-`JOIN` (`o.user_id = u.id` короче и читается быстрее). В публичных руководствах
+`JOIN` (`p.customer_id = c.id` короче и читается быстрее). В публичных руководствах
 вопрос спорный (Brooklyn — `id`; Holywell, Modern — избегать `id`;
 `docs/research/sql-style-guides.md`, §4 п. 9), поэтому стандарт фиксирует `id`
 по мета-принципу «единообразие важнее выбора». Критерии: единообразие,
@@ -913,29 +916,29 @@ create table users (
 **Уровень нормативности:** MUST.
 
 **Правило.** Внешний ключ называйте по таблице, на которую он ссылается,
-в единственном числе + суффикс `_id`: `user_id` ссылается на `users`,
+в единственном числе + суффикс `_id`: `customer_id` ссылается на `customer`,
 `customer_order_id` — на `customer_order`. При ссылке таблицы на саму себя
 вместо имени таблицы используйте имя роли (`parent_id`, `manager_id`).
 
 **Плохо:**
 
 ```sql
-create table orders (
+create table purchase (
     id int primary key,
-    owned_by int references users (id)
+    owned_by int references customer (id)
 );
 ```
 
 **Хорошо:**
 
 ```sql
-create table orders (
+create table purchase (
     id int primary key,
-    user_id int references users (id)
+    customer_id int references customer (id)
 );
 ```
 
-**Обоснование.** Имя `<таблица>_id` явно называет цель ссылки: `user_id`
+**Обоснование.** Имя `<таблица>_id` явно называет цель ссылки: `customer_id`
 читается и находится по grep без сверки с DDL, а при переименовании таблицы
 правка внешнего ключа локализована и механически предсказуема. Суффикс `_id`
 для ссылочной колонки — консенсус публичных руководств (Holywell, dbt, GitLab,
@@ -952,32 +955,32 @@ Mazur; `docs/research/sql-style-guides.md`, §3.2), а точная форма
 
 **Правило.** Индексы и констрейнты именуйте детерминированно по таблице и
 назначению: `<таблица>_<назначение>_<тип>`, где `<тип>` — суффикс `_pk`/`_fk`/
-`_uq`/`_ck` для констрейнтов и `_idx` для индексов. Примеры: `orders_pk`
-(первичный ключ), `orders_user_id_fk` (внешний ключ), `orders_email_uq`
-(уникальность), `orders_status_ck` (проверка), `orders_user_id_idx` (индекс).
+`_uq`/`_ck` для констрейнтов и `_idx` для индексов. Примеры: `purchase_pk`
+(первичный ключ), `purchase_customer_id_fk` (внешний ключ), `purchase_email_uq`
+(уникальность), `purchase_status_ck` (проверка), `purchase_customer_id_idx` (индекс).
 
 **Плохо:**
 
 ```sql
-create table orders (
+create table purchase (
     id int constraint pk1 primary key,
-    user_id int,
-    constraint fk1 foreign key (user_id) references users (id)
+    customer_id int,
+    constraint fk1 foreign key (customer_id) references customer (id)
 );
 
-create index idx1 on orders (user_id);
+create index idx1 on purchase (customer_id);
 ```
 
 **Хорошо:**
 
 ```sql
-create table orders (
-    id int constraint orders_pk primary key,
-    user_id int,
-    constraint orders_user_id_fk foreign key (user_id) references users (id)
+create table purchase (
+    id int constraint purchase_pk primary key,
+    customer_id int,
+    constraint purchase_customer_id_fk foreign key (customer_id) references customer (id)
 );
 
-create index orders_user_id_idx on orders (user_id);
+create index purchase_customer_id_idx on purchase (customer_id);
 ```
 
 **Обоснование.** Детерминированное имя констрейнта/индекса само объясняет, что
@@ -1036,26 +1039,26 @@ create sequence customer_id_seq;
 **Уровень нормативности:** SHOULD.
 
 **Правило.** Короткие алиасы-корреляции допустимы, но стройте их сокращением
-полного имени объекта (обычно первая буква: `o` для `orders`), а не инициализмом
-из нескольких букв: `oi` (для `order_item`) недопустим, как и любые аббревиатуры
-(`cst`, `ord`). Полное описательное имя объекта — всегда лучший выбор (NAM-002).
+полного имени объекта (обычно первая буква: `p` для `purchase`), а не инициализмом
+из нескольких букв: `pi` (для `purchase_item`) недопустим, как и любые аббревиатуры
+(`pch`, `prch`). Полное описательное имя объекта — всегда лучший выбор (NAM-002).
 
 **Плохо:**
 
 ```sql
-select oi.id
-from order_item as oi;
+select pi.id
+from purchase_item as pi;
 ```
 
 **Хорошо:**
 
 ```sql
-select o.id
-from orders as o;
+select p.id
+from purchase as p;
 ```
 
 **Обоснование.** Инициализм алиаса заставляет читателя держать в голове
-маппинг «`oi` → `order_item`» и путается, когда несколько таблиц начинаются
+маппинг «`pi` → `purchase_item`» и путается, когда несколько таблиц начинаются
 с одной буквы; однобуквенная корреляция — самый короткий допустимый вариант,
 а полное имя однозначно всегда. Вопрос спорный (dbt, Brooklyn — запрещать
 аббревиатуры; Holywell — корреляции из первых букв; SQLFluff AL06;
@@ -1079,7 +1082,7 @@ from orders as o;
 ```sql
 with x as (
     select id
-    from users
+    from customer
     where is_active
 )
 select x.id
@@ -1091,7 +1094,7 @@ from x;
 ```sql
 with active_user as (
     select id
-    from users
+    from customer
     where is_active
 )
 select active_user.id
@@ -1164,17 +1167,17 @@ ID, уровень нормативности, формулировка, при�
 **Плохо:**
 
 ```sql
-select a.id
-from users as a
-join orders as b on b.user_id = a.id;
+select c.id
+from customer as c
+join purchase as p on p.customer_id = c.id;
 ```
 
 **Хорошо:**
 
 ```sql
-select a.id
-from users as a
-inner join orders as b on b.user_id = a.id;
+select c.id
+from customer as c
+inner join purchase as p on p.customer_id = c.id;
 ```
 
 **Обоснование.** Явный тип соединения читается однозначно: читатель сразу
@@ -1198,7 +1201,7 @@ inner join orders as b on b.user_id = a.id;
 
 ```sql
 select x.id
-from (select id from users where active) as x;
+from (select id from customer where active) as x;
 ```
 
 **Хорошо:**
@@ -1206,7 +1209,7 @@ from (select id from users where active) as x;
 ```sql
 with x as (
     select id
-    from users
+    from customer
     where active
 )
 select x.id
@@ -1231,7 +1234,7 @@ from x;
 
 ```sql
 select id
-from users
+from customer
 where id != 10;
 ```
 
@@ -1239,7 +1242,7 @@ where id != 10;
 
 ```sql
 select id
-from users
+from customer
 where id <> 10;
 ```
 
@@ -1263,7 +1266,7 @@ where id <> 10;
 
 ```sql
 select id
-from users
+from customer
 where deleted_at = null;
 ```
 
@@ -1271,7 +1274,7 @@ where deleted_at = null;
 
 ```sql
 select id
-from users
+from customer
 where deleted_at is null;
 ```
 
@@ -1292,15 +1295,15 @@ where deleted_at is null;
 **Плохо:**
 
 ```sql
-select u.id u_id
-from users u;
+select c.id u_id
+from customer u;
 ```
 
 **Хорошо:**
 
 ```sql
-select u.id as u_id
-from users as u;
+select c.id as u_id
+from customer as c;
 ```
 
 **Обоснование.** Явный `AS` зрительно отделяет имя объекта от его алиаса
@@ -1322,14 +1325,14 @@ from users as u;
 
 ```sql
 select *
-from users;
+from customer;
 ```
 
 **Хорошо:**
 
 ```sql
 select id, name
-from users;
+from customer;
 ```
 
 **Обоснование.** `SELECT *` не фиксирует набор колонок: при добавлении или
@@ -1350,17 +1353,17 @@ from users;
 **Плохо:**
 
 ```sql
-select id, o.amount
-from users as u
-inner join orders as o on o.user_id = u.id;
+select id, p.amount
+from customer as c
+inner join purchase as p on p.customer_id = c.id;
 ```
 
 **Хорошо:**
 
 ```sql
-select u.id, o.amount
-from users as u
-inner join orders as o on o.user_id = u.id;
+select c.id, p.amount
+from customer as c
+inner join purchase as p on p.customer_id = c.id;
 ```
 
 **Обоснование.** Неквалифицированная колонка (`id`) при нескольких источниках

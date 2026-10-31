@@ -3,4 +3,4 @@ select
     id,
     name,
     email
-from users;
+from customer;

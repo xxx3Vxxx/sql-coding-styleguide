@@ -2,4 +2,4 @@
 select
     'short note' as note,
     'another note' as extra
-from users;
+from customer;

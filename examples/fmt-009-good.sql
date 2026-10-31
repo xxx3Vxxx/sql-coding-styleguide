@@ -1,7 +1,7 @@
 -- expected: none
 with x as (
     select id
-    from users
+    from customer
     where active
 )
 select x.id

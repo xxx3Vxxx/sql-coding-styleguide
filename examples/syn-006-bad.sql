@@ -1,3 +1,3 @@
 -- expected: AM04
 select *
-from users;
+from customer;
