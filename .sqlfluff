@@ -7,8 +7,16 @@
 [sqlfluff]
 dialect = postgres
 templater = raw
-rules = convention.not_equal
+rules = convention.not_equal,capitalisation.identifiers,references.keywords
 
 [sqlfluff:rules:convention.not_equal]
 # SYN-003: сравнение «не равно» — только через `<>` (ANSI), а не `!=`.
 preferred_not_equal_style = ansi
+
+[sqlfluff:rules:capitalisation.identifiers]
+# NAM-001: имена объектов — snake_case (строчными буквами).
+extended_capitalisation_policy = snake
+
+[sqlfluff:rules:references.keywords]
+# NAM-003: не использовать ключевые слова SQL как идентификаторы.
+unquoted_identifiers_policy = aliases
