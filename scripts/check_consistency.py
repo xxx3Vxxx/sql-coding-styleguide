@@ -17,7 +17,11 @@
   базовый профиль исключает SHOULD-проверяемые правила (`exclude_rules`);
 - корпус фикстур соответствует признаку «проверяется линтером»: у каждого
   правила «да» есть пара `examples/<id>-good.sql` + `examples/<id>-bad.sql`,
-  у правила «нет» фикстур нет, а все файлы названы по этому шаблону.
+  у правила «нет» фикстур нет, а все файлы названы по этому шаблону;
+- профили совпадают во всём, кроме `rules`/`warnings`/`exclude_rules` (любая
+  layout-секция или значение, забытые в одном из файлов, ловятся);
+- в прозе `*.md` нет отсылок к несуществующим путям из известных корней
+  (`docs/`, `.scratch/`, `examples/`, `scripts/`).
 
 Выход: 0 — всё согласовано; 1 — есть расхождения.
 
@@ -211,11 +215,71 @@ def parse_config(path):
         "exclude_set": exclude_set,
         "comment_refs": comment_refs,
         "rule_sections": rule_sections,
+        "options": options,
     }
 
 
 def dotted_names(text):
     return set(RULE_NAME_RE.findall(text))
+
+
+# Ключи секции `[sqlfluff]`, которые законно различаются между профилями.
+PROFILE_ONLY_KEYS = ("rules", "warnings", "exclude_rules")
+
+
+def profile_sections(options):
+    """Секции профиля без ключей, различающихся между профилями по назначению."""
+    sections = {}
+    for section, values in options.items():
+        if section == "sqlfluff":
+            values = {k: v for k, v in values.items() if k not in PROFILE_ONLY_KEYS}
+        if values:
+            sections[section] = dict(values)
+    return sections
+
+
+# Проверка отсылок к файлам: только пути из известных корней репозитория.
+REF_ROOTS = ("docs/", ".scratch/", "examples/", "scripts/")
+# Шаблоны/диапазоны/перечисления — не конкретные пути.
+REF_SKIP_RE = re.compile(r"[<>{}~*,]|\u2013|\u2014|\.\.\.")
+INLINE_CODE_RE = re.compile(r"`([^`\n]+)`")
+FENCED_BLOCK_RE = re.compile(r"```.*?```", re.S)
+MARKDOWN_DOCS = ("AGENTS.md", "README.md", "GLOSSARY.md", "STANDARD.md")
+
+
+def iter_markdown_docs(root):
+    docs = []
+    for name in MARKDOWN_DOCS:
+        path = os.path.join(root, name)
+        if os.path.exists(path):
+            docs.append(path)
+    for top in ("docs", ".scratch"):
+        for dirpath, _dirs, names in os.walk(os.path.join(root, top)):
+            docs.extend(
+                os.path.join(dirpath, name)
+                for name in sorted(names)
+                if name.endswith(".md")
+            )
+    return docs
+
+
+def find_broken_refs(root):
+    """Пути из известных корней, упомянутые в прозе `*.md`, но отсутствующие."""
+    missing = []
+    for path in iter_markdown_docs(root):
+        text = FENCED_BLOCK_RE.sub("", read_text(path))  # игнорируем код-блоки
+        rel = os.path.relpath(path, root)
+        for span in INLINE_CODE_RE.findall(text):
+            candidate = span.strip()
+            if not candidate or " " in candidate:
+                continue
+            if REF_SKIP_RE.search(candidate):
+                continue
+            if not candidate.startswith(REF_ROOTS):
+                continue
+            if not os.path.exists(os.path.join(root, candidate)):
+                missing.append("{}: `{}`".format(rel, candidate))
+    return sorted(set(missing))
 
 
 # ---------------------------------------------------------------------------
@@ -411,6 +475,25 @@ def main():
         ),
     )
 
+    # 5b) Паритет секций: кроме rules/warnings/exclude_rules профили совпадают.
+    full_rest = profile_sections(full["options"])
+    base_rest = profile_sections(base["options"])
+    parity_diff = []
+    for section in sorted(set(full_rest) | set(base_rest)):
+        if full_rest.get(section) != base_rest.get(section):
+            parity_diff.append(
+                "[{section}]: полный={f}, базовый={b}".format(
+                    section=section,
+                    f=full_rest.get(section),
+                    b=base_rest.get(section),
+                )
+            )
+    note(
+        not parity_diff,
+        "профили: все секции, кроме `rules`/`warnings`/`exclude_rules`, идентичны"
+        + ("" if not parity_diff else "\n  - " + "\n  - ".join(parity_diff)),
+    )
+
     # 6) Корпус фикстур: инвариант «правило ↔ examples/<id>-{good,bad}.sql».
     examples_dir = os.path.join(root, "examples")
     fixture_by_rule = {}
@@ -451,6 +534,14 @@ def main():
         not off_pattern,
         "корпус: все файлы examples/*.sql названы по шаблону <ID>-good|bad.sql"
         + ("" if not off_pattern else " (мимо шаблона: {})".format(", ".join(off_pattern))),
+    )
+
+    # 7) Отсылки к файлам в прозе `*.md` (пути из известных корней).
+    broken_refs = find_broken_refs(root)
+    note(
+        not broken_refs,
+        "ссылки: все пути `docs/`/`.scratch/`/`examples/`/`scripts/` из прозы *.md существуют"
+        + ("" if not broken_refs else "\n  - " + "\n  - ".join(broken_refs)),
     )
 
     # Итог.

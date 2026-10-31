@@ -66,3 +66,28 @@ reference_map = get_ruleset().rule_reference_map()   # это МЕТОД, выз
 
 Общее правило: при сомнении сначала `sqlfluff rules` (CLI) — он всегда
 показывает фактический набор правил установленной версии.
+
+## Пробы конфига
+
+Чтобы проверить, как линтер поведёт себя с другой секцией или значением, не
+правьте `.sqlfluff` — соберите временный конфиг и прогоните по нему CLI:
+
+```bash
+cp .sqlfluff /tmp/probe.sqlfluff
+printf '\n[sqlfluff:layout:type:common_table_expression]\nspacing_within = single\n' >> /tmp/probe.sqlfluff
+.venv/bin/sqlfluff lint --config /tmp/probe.sqlfluff path/to/file.sql
+```
+
+Подменять существующее значение удобнее `sed` по точному якорю
+(`sed 's/^indent_unit = space/indent_unit = space\nindented_joins = True/'`), а
+не догадываясь о структуре файла.
+
+Ловушки (4.5.0):
+
+- `FluffConfig.from_string(...)` падает, если одна INI-секция встречается
+  дважды (например, вы дописываете `[sqlfluff:rules:X]` к конфигу, где она уже
+  есть). Для проб надёжнее файл + `--config`, а не сборка строки в Python.
+- При линте файла **вне** репозитория `sqlfluff lint` без `--config` не находит
+  `.sqlfluff` и падает с `No dialect was specified`. Диалект берётся из
+  конфига, а конфиг ищется вверх по дереву от линтуемого пути: для файлов в
+  `/tmp` передавайте `--config` **явно**.

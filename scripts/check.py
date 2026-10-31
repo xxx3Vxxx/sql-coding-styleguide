@@ -10,11 +10,15 @@
 - на «хорошем» примере (`none`) линтер молчит;
 - на «плохом» срабатывают ровно перечисленные правила.
 
+Дополнительно линтуются все ```sql-блоки в секциях `**Хорошо:**` файла
+`STANDARD.md`: источник истины не должен дрейфовать от собственных примеров.
+Блок обязан быть чистым (ноль срабатываний) под выбранным конфигом.
+
 Режимы:
-  (без флагов)       корпус по полному профилю `.sqlfluff` (автоподхват);
+  (без флагов)       корпус + блоки STANDARD.md по полному профилю `.sqlfluff`;
   --config <файл>    выбрать конфиг (напр. `.sqlfluff.base` для базового);
   --consistency      только сверка согласованности (check_consistency.py);
-  --all              корпус + сверка согласованности одним прогоном.
+  --all              корпус + блоки STANDARD.md + сверка согласованности.
 
 Выход: 0 — всё совпало; 1 — есть расхождения.
 """
@@ -25,6 +29,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
 EXPECTED_RE = re.compile(r"^\s*--\s*expected:\s*(.+?)\s*$")
 
@@ -34,7 +39,7 @@ USAGE = """\
 
   --config <файл>   Конфиг SQLFluff для прогона корпуса (напр. `.sqlfluff.base`).
   --consistency     Только сверка согласованности документа и конфига.
-  --all             Корпус + сверка согласованности.
+  --all             Корпус + блоки STANDARD.md + сверка согласованности.
   -h, --help        Эта справка.
 """
 
@@ -141,6 +146,133 @@ def run_corpus(config_path=None):
     return 0
 
 
+FENCE_RE = re.compile(r"^```(\w*)\s*$")
+# Маркеры, закрывающие секцию «Хорошо» внутри правила.
+GOOD_SECTION_STOPS = ("**Плохо:**", "**Обоснование.**", "**Проверяется линтером:**")
+
+
+def extract_good_blocks(text, label="STANDARD.md"):
+    """Вернуть (blocks, errors): SQL-блоки в секциях `**Хорошо:**`.
+
+    Секция «Хорошо» тянется от маркера до ближайшего `**Плохо:**`,
+    `**Обоснование.**`, `**Проверяется линтером:**` или заголовка `### `/`## `.
+    Внутри собираются все ```sql- или ```-блоки (порядок сохраняется).
+    """
+    blocks = []
+    errors = []
+    lines = text.split("\n")
+    n = len(lines)
+    i = 0
+    while i < n:
+        if lines[i].strip().startswith("**Хорошо"):
+            start = i + 1
+            j = start
+            while j < n:
+                stripped = lines[j].strip()
+                if (stripped.startswith("### ") or stripped.startswith("## ")
+                        or stripped in GOOD_SECTION_STOPS):
+                    break
+                j += 1
+            region = lines[start:j]
+            k = 0
+            while k < len(region):
+                match = FENCE_RE.match(region[k].strip())
+                if not match:
+                    k += 1
+                    continue
+                lang = match.group(1).lower()
+                if lang not in ("sql", ""):
+                    k += 1  # пропустить не-SQL блок целиком
+                    while k < len(region) and not region[k].strip().startswith("```"):
+                        k += 1
+                    k += 1
+                    continue
+                body = []
+                k += 1
+                closed = False
+                while k < len(region):
+                    if region[k].strip().startswith("```"):
+                        closed = True
+                        break
+                    body.append(region[k])
+                    k += 1
+                if not closed:
+                    errors.append("{}: незакрытый ```sql-блок (~строка {})".format(
+                        label, start + 1))
+                elif body:
+                    blocks.append((
+                        "{}:~{}".format(label, start + 1),
+                        "\n".join(body).rstrip("\n") + "\n",
+                    ))
+                k += 1
+            i = j
+        else:
+            i += 1
+    return blocks, errors
+
+
+def run_doc_blocks(config_path=None):
+    """Прогон линтера по ```sql-блокам «Хорошо» из STANDARD.md; код выхода."""
+    sqlfluff = resolve_sqlfluff()
+    if not sqlfluff:
+        print("ERROR: sqlfluff не найден. Укажите SQLFLUFF или установите линтер.",
+              file=sys.stderr)
+        return 1
+
+    standard_path = os.path.join(repo_root(), "STANDARD.md")
+    with open(standard_path, encoding="utf-8") as handle:
+        blocks, errors = extract_good_blocks(handle.read())
+
+    for err in errors:
+        print("FAIL " + err)
+    if not blocks:
+        print("FAIL STANDARD.md: не найдено ни одного SQL-блока «Хорошо»",
+              file=sys.stderr)
+        return 1
+
+    config = os.path.abspath(config_path) if config_path else os.path.join(
+        repo_root(), ".sqlfluff")
+
+    targets = []
+    with tempfile.TemporaryDirectory() as tmpdir:
+        for idx, (label, sql) in enumerate(blocks, 1):
+            path = os.path.join(tmpdir, "good-{:03d}.sql".format(idx))
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(sql)
+            targets.append((path, label))
+
+        cmd = [sqlfluff, "lint", "--format", "json", "--config", config]
+        cmd += [path for path, _ in targets]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        try:
+            payload = json.loads(proc.stdout)
+        except json.JSONDecodeError:
+            print("ERROR: не удалось разобрать вывод sqlfluff (STANDARD.md)",
+                  file=sys.stderr)
+            print(proc.stdout[:2000], file=sys.stderr)
+            return 1
+
+        label_by_path = {os.path.realpath(p): l for p, l in targets}
+        violations = 0
+        for entry in payload:
+            codes = sorted({v["code"] for v in entry.get("violations", [])})
+            if codes:
+                violations += 1
+                print("FAIL {}: {}".format(
+                    label_by_path.get(os.path.realpath(entry["filepath"]),
+                                      entry["filepath"]),
+                    codes))
+
+    if errors or violations:
+        print("{} SQL-блоков «Хорошо» с нарушениями".format(violations),
+              file=sys.stderr)
+        return 1
+    print("OK: {n} SQL-блоков «Хорошо» в STANDARD.md чисты (конфиг: {c})".format(
+        n=len(blocks),
+        c=os.path.basename(config) if config_path else ".sqlfluff (по умолчанию)"))
+    return 0
+
+
 def main(argv=None):
     args = list(sys.argv[1:] if argv is None else argv)
     if "--help" in args or "-h" in args:
@@ -162,6 +294,7 @@ def main(argv=None):
     code = 0
     if do_corpus:
         code = max(code, run_corpus(config_path))
+        code = max(code, run_doc_blocks(config_path))
     if do_consistency:
         scripts_dir = os.path.dirname(os.path.abspath(__file__))
         if scripts_dir not in sys.path:

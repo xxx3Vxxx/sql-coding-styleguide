@@ -6,12 +6,18 @@
 python3 scripts/check.py --all
 ```
 
-Это корпус примеров (`scripts/check.py`, линтер по `examples/`) и сверка
-согласованности документа, §8-маппинга и конфигов (`scripts/check_consistency.py`).
-Нужен SQLFluff (версия — `requirements.txt`). Запуск линтера и интроспекция его
-правил — `docs/agents/sqlfluff-api.md`.
+Это корпус примеров и SQL-блоки «Хорошо» из `STANDARD.md` (`scripts/check.py`)
+и сверка согласованности документа, §8-маппинга и конфигов
+(`scripts/check_consistency.py`). Нужен SQLFluff (версия — `requirements.txt`).
+Запуск линтера и интроспекция его правил — `docs/agents/sqlfluff-api.md`.
+Инварианты «правило ↔ §8 ↔ конфиг» — `docs/agents/standard-model.md`.
 
 ## Agent skills
+
+### Модель стандарта
+
+Устройство правил, §8.2-маппинг и инварианты согласованности (правило ↔ §8 ↔
+конфиг). See `docs/agents/standard-model.md`.
 
 ### Issue tracker
 
