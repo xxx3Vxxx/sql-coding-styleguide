@@ -745,7 +745,11 @@ inner join second_cte as s
 
 В upsert (`on conflict ... do update`) `set` и `where` живут вложенно, на один
 уровень внутрь относительно `do update`: `set` — с отступом 4, присваивания — 8,
-`where` — 4.
+`where` — 4. Этот отступ — следствие FMT-009 (`MUST`: вложенная клауза
+сдвигается на один уровень от родителя), а не отступление от left-align;
+FMT-004 и FMT-010 задают левый край для клауз **верхнего уровня**, вложенные же
+выравниваются по уровню родителя — как тело CTE в FMT-009/FMT-015. FMT-016
+(`SHOULD`) здесь лишь описывает то, что уже навязано FMT-009.
 
 **Плохо:**
 
@@ -816,7 +820,8 @@ on conflict (id) do update
 `returning` из одного элемента — на строке с ключевым словом:
 
 ```sql
-delete from customer
+delete
+from customer
 where id = 1
 returning id;
 ```

@@ -28,6 +28,10 @@
 - `check.py --config .sqlfluff.base` — зелёный.
 - Проверка битых ссылок (`check_consistency.py`) проходит: пути `docs/`/`.scratch/`
   из прозы существуют, включая `docs/adr/0007-dml-layout.md`.
+- Code-review (две оси, диапазон `51e0ac4..HEAD`) выполнен, находки исправлены на
+  ветке `ticket/code-review-fixes`: синхронизирована версия `README.md`,
+  канонизирован пример `delete`/`from` в `FMT-016`, отступ upsert увязан с
+  `FMT-009`.
 
 ## Что осталось человеку
 
