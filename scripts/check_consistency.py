@@ -21,7 +21,11 @@
 - профили совпадают во всём, кроме `rules`/`warnings`/`exclude_rules` (любая
   layout-секция или значение, забытые в одном из файлов, ловятся);
 - в прозе `*.md` нет отсылок к несуществующим путям из известных корней
-  (`docs/`, `.scratch/`, `examples/`, `scripts/`).
+  (`docs/`, `.scratch/`, `examples/`, `scripts/`);
+- версия стандарта в шапке `STANDARD.md` совпадает с версией в шапке
+  `README.md`;
+- число фикстур, зашитое в `README.md` как ожидаемый результат прогона, равно
+  фактическому числу `examples/*.sql`.
 
 Выход: 0 — всё согласовано; 1 — есть расхождения.
 
@@ -36,6 +40,10 @@ HEADER_RE = re.compile(r"^###\s+((?:FMT|NAM|SYN)-\d{3})\b")
 LEVEL_RE = re.compile(r"\*\*Уровень нормативности:\*\*\s*(MUST|SHOULD|MAY)")
 LINT_RE = re.compile(r"\*\*Проверяется линтером:\*\*\s*(да|нет)")
 COMMENT_ID_RE = re.compile(r"\b(?:FMT|NAM|SYN)-\d{3}\b")
+# Версия стандарта в шапке: «Версия: **0.3.0**» / «версия **0.3.0**».
+VERSION_RE = re.compile(r"^>.*?[Вв]ерсия:?\s*\*\*(\d+\.\d+\.\d+)\*\*", re.MULTILINE)
+# Число фикстур, зашитое в README как ожидаемый результат прогона.
+FIXTURE_COUNT_RE = re.compile(r"OK:\s*(\d+)\s+фикстур")
 # Имя правила SQLFluff: строчное с точками, напр. layout.indent, ambiguous.join.
 RULE_NAME_RE = re.compile(r"[a-z][a-z0-9]*(?:\.[a-z_][a-z0-9_]*)+")
 
@@ -47,6 +55,12 @@ def repo_root():
 def read_text(path):
     with open(path, encoding="utf-8") as handle:
         return handle.read()
+
+
+def parse_doc_version(text):
+    """Версия стандарта из шапки документа или None, если шапки нет."""
+    match = VERSION_RE.search(text)
+    return match.group(1) if match else None
 
 
 # ---------------------------------------------------------------------------
@@ -320,6 +334,28 @@ def main():
     if len(set(doc_ids)) != len(doc_ids):
         note(False, "в документе есть дублирующиеся ID правил")
 
+    # 1b) Версия стандарта совпадает в шапках STANDARD.md и README.md.
+    readme_path = os.path.join(root, "README.md")
+    readme_text = read_text(readme_path) if os.path.exists(readme_path) else ""
+    standard_version = parse_doc_version(text)
+    readme_version = parse_doc_version(readme_text)
+    versions_agree = (
+        standard_version is not None
+        and readme_version is not None
+        and standard_version == readme_version
+    )
+    note(
+        versions_agree,
+        "версия: STANDARD.md и README.md совпадают"
+        + (
+            ""
+            if versions_agree
+            else " (STANDARD={!r}, README={!r})".format(
+                standard_version, readme_version
+            )
+        ),
+    )
+
     # 2) Таблица §8.2.
     table_rows, table_errors = parse_table(text)
     for err in table_errors:
@@ -534,6 +570,22 @@ def main():
         not off_pattern,
         "корпус: все файлы examples/*.sql названы по шаблону <ID>-good|bad.sql"
         + ("" if not off_pattern else " (мимо шаблона: {})".format(", ".join(off_pattern))),
+    )
+
+    # 6b) Число фикстур, зашитое в README как ожидаемый результат, — фактическое.
+    fixture_count = sum(
+        1 for name in os.listdir(examples_dir) if name.endswith(".sql")
+    )
+    listed_match = FIXTURE_COUNT_RE.search(readme_text)
+    listed_count = int(listed_match.group(1)) if listed_match else None
+    note(
+        listed_count == fixture_count,
+        "README: ожидаемое число фикстур совпадает с корпусом"
+        + (
+            ""
+            if listed_count == fixture_count
+            else " (README={!r}, examples={})".format(listed_count, fixture_count)
+        ),
     )
 
     # 7) Отсылки к файлам в прозе `*.md` (пути из известных корней).

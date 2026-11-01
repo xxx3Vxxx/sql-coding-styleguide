@@ -48,14 +48,38 @@ def repo_root():
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+def main_checkout_root():
+    """Корень основного checkout — где живёт `.venv`, общий для всех worktree.
+
+    В git-worktree `.venv` нет (он в `.gitignore`), поэтому линтер ищется ещё и
+    в главном рабочем каталоге, путь к которому даёт `--git-common-dir`.
+    """
+    try:
+        proc = subprocess.run(
+            ["git", "-C", repo_root(), "rev-parse", "--git-common-dir"],
+            capture_output=True, text=True,
+        )
+    except OSError:
+        return None
+    if proc.returncode != 0 or not proc.stdout.strip():
+        return None
+    common = proc.stdout.strip()
+    if not os.path.isabs(common):
+        common = os.path.join(repo_root(), common)
+    return os.path.dirname(os.path.abspath(common))
+
+
 def resolve_sqlfluff():
     env = os.environ.get("SQLFLUFF")
     if env:
         return env
     candidates = [
         os.path.join(repo_root(), ".venv", "bin", "sqlfluff"),
-        "sqlfluff",
     ]
+    main_root = main_checkout_root()
+    if main_root:
+        candidates.append(os.path.join(main_root, ".venv", "bin", "sqlfluff"))
+    candidates.append("sqlfluff")
     for candidate in candidates:
         if shutil.which(candidate):
             return candidate

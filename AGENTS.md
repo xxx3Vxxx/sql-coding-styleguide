@@ -11,6 +11,8 @@ python3 scripts/check.py --all
 (`scripts/check_consistency.py`). Нужен SQLFluff (версия — `requirements.txt`).
 Запуск линтера и интроспекция его правил — `docs/agents/sqlfluff-api.md`.
 Инварианты «правило ↔ §8 ↔ конфиг» — `docs/agents/standard-model.md`.
+Ту же команду гоняет включённый `.githooks/pre-commit`
+(`git config core.hooksPath .githooks`).
 
 ## Agent skills
 

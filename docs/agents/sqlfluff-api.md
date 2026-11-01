@@ -13,7 +13,9 @@ pip install -r requirements.txt
 python3 scripts/check.py --all   # корпус примеров + сверка согласованности
 ```
 
-`scripts/check.py` находит линтер в порядке: `$SQLFLUFF` → `.venv/bin/sqlfluff` →
+`scripts/check.py` находит линтер в порядке: `$SQLFLUFF` → `.venv/bin/sqlfluff`
+текущего каталога → `.venv/bin/sqlfluff` **основного checkout** (путь берётся из
+`git rev-parse --git-common-dir`; это спасает git-worktree, где `.venv` нет) →
 `sqlfluff` в `PATH`. Выбрать конфиг: `--config .sqlfluff.base`.
 
 ## Список правил (CLI)
@@ -25,6 +27,21 @@ python3 scripts/check.py --all   # корпус примеров + сверка 
 
 Вывод вида `CP02: [capitalisation.identifiers] ... groups: all, core, ...` —
 это источник точных кодов и имён правил для `.sqlfluff`.
+
+## Секции раскладки (layout)
+
+Какие `[sqlfluff:layout:type:*]` вообще существуют, видно в дефолтном конфиге
+установленной версии:
+
+```bash
+grep -oE '^\[sqlfluff:layout:type:[a-z_]+\]' \
+  .venv/lib/python*/site-packages/sqlfluff/core/default_config.cfg
+```
+
+Секция с именем, для которого парсер **не** строит узел (в 4.5.0 так с
+`returning_clause`), принимается конфигом, но ни на что не влияет: наличие
+секции в дефолте ещё не значит, что рычаг работает. Проверяйте фактом —
+`sqlfluff lint`/`sqlfluff parse` на пробном файле, а не наличием секции.
 
 ## Интроспекция из Python
 

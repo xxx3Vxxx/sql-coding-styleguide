@@ -1,0 +1,48 @@
+#!/bin/sh
+# Pre-commit: гейт репозитория — корпус примеров, блоки «Хорошо» и сверка
+# согласованности (то же, что CI в .github/workflows/check.yml).
+#
+# Включить один раз в клоне:
+#     git config core.hooksPath .githooks
+#
+# Осознанный обход: git commit --no-verify
+set -u
+
+repo_root=$(git rev-parse --show-toplevel) || exit 1
+cd "$repo_root" || exit 1
+
+# 1) Финальный перевод строки у staged текстовых файлов.
+#    (Имена в этом репозитории без пробелов, поэтому разбор по словам безопасен.)
+missing_nl=""
+for f in $(git diff --cached --name-only --diff-filter=ACM); do
+    case "$f" in
+        *.md|*.sql|*.py|*.sh|*.yml|*.yaml|*.cfg|*.toml|*.txt|*.sqlfluff|*.sqlfluff.base) ;;
+        *) continue ;;
+    esac
+    [ -f "$f" ] || continue
+    if [ -n "$(tail -c 1 "$f")" ]; then
+        missing_nl="${missing_nl}${f}
+"
+    fi
+done
+if [ -n "$missing_nl" ]; then
+    echo "pre-commit: нет перевода строки в конце файла:" >&2
+    printf '%s' "$missing_nl" | sed 's/^/  /' >&2
+    echo "Добавьте перевод строки и повторите commit." >&2
+    exit 1
+fi
+
+# 2) Гейт репозитория. Если SQLFluff не найден (свежий клон без .venv) —
+#    проверка бессмысленна, коммит не блокируем.
+if out=$(python3 scripts/check.py --all 2>&1); then
+    exit 0
+fi
+case "$out" in
+    *"sqlfluff не найден"*)
+        echo "pre-commit: SQLFluff не найден — гейт пропущен (docs/agents/sqlfluff-api.md)" >&2
+        exit 0
+        ;;
+esac
+printf '%s\n' "$out" >&2
+echo "pre-commit: гейт не прошёл. Обход (осознанно): git commit --no-verify" >&2
+exit 1
